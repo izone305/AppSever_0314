@@ -1,4 +1,5 @@
 const http = require('http');
+const fs = require("fs"); //fs module 불러오기
 const formTag = `
 <form method="GET" action="/login"> 
 <input type="text" name="id">
@@ -24,47 +25,55 @@ ${data}
 </html>
 `;
 }
-
-const pokemon = require('pokemon'); //다운받은 pokemon npm을 불러온다.
-
+function imgGen(){
+  return `<img src="/pokeImg" alt="test" />` //포켓몬 이미지 추가 코드
+}
+const pokemon = require('pokemon')
+let pokemonNum;
 const server = http.createServer(function(request, response){
 // 최초접속
 if(request.method === 'GET' && request.url === '/') {
 response.writeHead(200, {'Content-Type': 'text/html; charset=utf-8'});
-let page = firstPage(formTag);
+let page = firstPage(formTag, "");
 response.write(page);
 response.end();
 }
 // 무언가
 if(request.method === 'GET' && request.url.startsWith('/login')) {
 
-  //지원되는 나라별 언어 타입을 배열로 저장. 이는 제공되는 객체를 불러와도 가능.
   const pokeLg = ["de", "en", "fr", "es", "ja", "ko"];
-  //console.dir(pokemon.all());
 
   console.log(request.url);
   const name = request.url.split('=')[1];
   
-  const pokeNameKo = decodeURIComponent(name); //한글 안깨지도록 디코딩해줌.(포켓몬 이름을 한글로 받을 경우)
+  const pokeNameKo = decodeURIComponent(name); //한글 안깨지도록 디코딩해줌
 
-  let pp = pokemon.getId(pokeNameKo,'ko'); //입력받은 이름을 이용해 포켓몬 ID를 추출
-  console.log(pp);
+  pokemonNum = pokemon.getId(pokeNameKo,'ko');
+  console.log(pokemonNum);
   
   response.writeHead(200, {'Content-Type': 'text/html; charset=utf-8'});
-  //formTag를 한번 더 입력해서 나온 결과 위에 계속해서 다른 포켓몬 이름을 요청할 수 있도록 함.
-  response.write(firstPage(formTag));
 
+  response.write(firstPage(imgGen())) //포켓몬 넘버와 매칭시켜 이미지 로드
+  
   for(let i = 0; i < pokeLg.length; i++){
-    //ID번호에 맞는 포켓몬 이름을 나라별로 뽑아서 저장 후 태그 씌워서 페이지에 띄워줌.
-    let ppNum = pokemon.getName(pp, pokeLg[i]);
-    let page = firstPage(greet(ppNum))
+    let pokenonName = pokemon.getName(pokemonNum, pokeLg[i]);
+    let page =   firstPage(greet(pokenonName))
     response.write(page);
-
+    
   }
-
+  
   response.end();
   }
-  });
+  if(request.method === 'GET' && request.url.startsWith('/pokeImg')){
+    //fs module을 불러서 포켓몬 넘버에 맞는 이미지를 읽어 오도록 함.
+    fs.readFile(`./node_modules/pokemon-sprites/sprites/pokemon/${pokemonNum}.png`, function(err, data){
+      response.writeHead(200);
+      response.write(data); //읽어온 이미지는 data라는 이름으로 문서에 써줌
+      response.end();
+    })
+      
+  }
+});
 // 서버 포트 설정
 server.listen(305, function(error) {
 if(error) { console.error('서버 안돌아감') } else { console.log('서버 돌아감'); }

@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "pokemon": "^2.3.4"
+    "pokemon": "^2.3.4",
+    "pokemon-sprites": "github:PokeAPI/sprites"
   }
 }
